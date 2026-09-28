@@ -109,23 +109,64 @@
      ------------------------------------------------------------------ */
   gsap.set(".nav", { opacity: 0, y: -20 });
 
-  // a message typed live at 100 WPM (120ms per character)
+  // Loader scripts, typed live at 100 WPM (120ms per character). {n} is her
+  // egg count; `one` shrinks the line to fit on one row.
+  const eggCount = () => {
+    try { return (JSON.parse(localStorage.getItem("proposal-eggs")) || []).length; } catch (e) { return 0; }
+  };
+  const SCRIPTS = {
+    first: {
+      lines: [
+        { t: "Hi Natallia." },
+        { t: "This is 100 WPM." },
+        { t: "Your turn.", i: true },
+      ],
+    },
+    still: {
+      lines: [
+        { t: "Welcome back, Natallia.", one: true },
+        { t: "Still {n} out of 7…" },
+        { t: "Take your time. “Savour” it.", i: true },
+      ],
+    },
+  };
+
+  // First visit gets the original; after that, the returning script.
+  const seen = localStorage.getItem("proposal-visited") || eggCount() > 0 || localStorage.getItem("proposal-milk");
+  localStorage.setItem("proposal-visited", "1");
+  const scriptKey = seen ? "still" : "first";
+
   const LOADER = {
     intro: async () => {
-      const lines = $$(".type-l");
-      const texts = ["Hi Natallia.", "This is 100 WPM.", "Your turn."];
-      const wpm = $(".type-wpm");
+      const sc = SCRIPTS[scriptKey], n = eggCount();
+      const box = $(".type-lines"), wpm = $(".type-wpm");
+      const lines = sc.lines.map((l) => {
+        const p = document.createElement("p");
+        p.className = `type-l ${l.i ? "serif-i" : "serif"}`;
+        p.dataset.t = l.t.replace(/\{n\}/g, n);
+        box.appendChild(p);
+        if (l.one) {
+          // measure the finished line and shrink it until it fits one row
+          p.style.whiteSpace = "nowrap";
+          p.textContent = p.dataset.t;
+          const fs = parseFloat(getComputedStyle(p).fontSize);
+          if (p.scrollWidth > box.clientWidth) p.style.fontSize = `${fs * (box.clientWidth / p.scrollWidth) * 0.98}px`;
+          p.textContent = "";
+        }
+        return p;
+      });
       gsap.from(".type-meta, .type-foot", { opacity: 0, y: 10, duration: 0.8, ease: "power3.out" });
       await wait(600);
-      for (let i = 0; i < texts.length; i++) {
-        lines[i].classList.add("typing");
-        for (const ch of texts[i]) {
-          lines[i].textContent += ch;
+      for (let i = 0; i < lines.length; i++) {
+        const p = lines[i];
+        p.classList.add("typing");
+        for (const ch of p.dataset.t) {
+          p.textContent += ch;
           wpm.textContent = pad(100 + rand(-7, 7));
           await wait(reduce ? 10 : 120 * rand(0.55, 1.45));
         }
         wpm.textContent = "100";
-        if (i < texts.length - 1) { await wait(420); lines[i].classList.remove("typing"); }
+        if (i < lines.length - 1) { await wait(420); p.classList.remove("typing"); }
       }
       await wait(900);
     },
