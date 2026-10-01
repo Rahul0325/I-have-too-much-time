@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=24" />
+  <link rel="stylesheet" href="styles.css?v=26" />
   <script>document.documentElement.classList.add("js")</script>
   <!-- Vercel Web Analytics — served by Vercel at /_vercel/insights once enabled in the dashboard -->
   <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
@@ -249,12 +249,25 @@
     <section class="contract" id="contract">
       <div class="label mono">(04) &nbsp;One small formality</div>
       <h2 class="contract-title" data-split>Just sign <em>here.</em></h2>
-      <p class="contract-copy" data-fade>To make this official, please type the following oath below. Accuracy matters.</p>
+      <p class="contract-copy" data-fade>To make this official, choose your oath. Choose wisely.</p>
 
-      <div class="oath" data-fade data-cursor="Type">
+      <!-- Ballot — three oaths, teased. Picking one folds the others away and reveals
+           that, surprise, every oath is typed. Teasers are filled in by main.js. -->
+      <div class="ballot" data-fade>
+        <button class="ballot-opt" data-oath="swear" data-cursor="Brave"><span class="ballot-k mono">(A) &nbsp;The honourable one</span><span class="ballot-t serif"></span><span class="ballot-arrow">→</span></button>
+        <button class="ballot-opt" data-oath="mango" data-cursor="Spill"><span class="ballot-k mono">(B) &nbsp;The confession</span><span class="ballot-t serif"></span><span class="ballot-arrow">→</span></button>
+        <button class="ballot-opt" data-oath="dia" data-cursor="Flatter"><span class="ballot-k mono">(C) &nbsp;The flattery</span><span class="ballot-t serif"></span><span class="ballot-arrow">→</span></button>
+      </div>
+
+      <div class="oath" data-cursor="Type">
+        <div class="oath-top">
+          <span class="oath-chosen mono"></span>
+          <button class="oath-back mono" data-cursor="Flee">← choose a different fate</button>
+        </div>
+        <p class="oath-note serif-i">Oh, did I not mention? All oaths are typed.</p>
         <img class="oath-ghost" src="assets/ghosts/quill.png" alt="" />
         <div class="oath-text serif" aria-hidden="true"></div>
-        <input class="oath-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Type: I solemnly swear I will take the typing test" />
+        <input class="oath-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Type the oath" />
         <div class="oath-hint mono"><span class="kbd">tap</span> &nbsp;or just start typing</div>
         <div class="oath-line"></div>
         <div class="oath-sig mono">Signature of Natallia &nbsp;·&nbsp; <span class="oath-date"></span></div>
@@ -263,14 +276,19 @@
       <div class="result" aria-live="polite">
         <div class="result-kicker mono">Well, well, well.</div>
         <div class="result-main">
-          <span class="result-lead serif-i">You just typed at</span>
-          <span class="result-num">00</span>
-          <span class="result-unit mono">WPM</span>
+          <div class="result-score">
+            <span class="result-lead mono">You just typed at</span>
+            <span class="result-numrow"><span class="result-num">00</span><span class="result-unit mono">WPM</span></span>
+          </div>
           <img class="result-ghost" src="assets/ghosts/cheer.png" alt="" />
         </div>
         <p class="result-line serif">Congratulations. <em>You've taken a typing test.</em></p>
-        <p class="result-tier mono"></p>
-        <p class="result-fine mono">(It was one sentence, so the real one is still owed. Nice try though.)</p>
+        <dl class="result-stats">
+          <div><dt class="mono">Reward</dt><dd class="rs-reward"></dd></div>
+          <div><dt class="mono">Milk</dt><dd class="rs-milk"></dd></div>
+          <div><dt class="mono">Accuracy</dt><dd class="rs-acc"></dd></div>
+        </dl>
+        <p class="result-proof"><span aria-hidden="true">📸</span> Screenshot this and send it to Rahul. <em class="serif-i">No screenshot, no matcha.</em></p>
         <button class="btn-ghostly mono result-retry" data-cursor="Again">↺ &nbsp;Sign again</button>
       </div>
     </section>
@@ -362,6 +380,6 @@
   <script src="vendor/ScrollTrigger.min.js"></script>
   <script src="vendor/SplitText.min.js"></script>
   <script src="vendor/lenis.min.js"></script>
-  <script src="main.js?v=41"></script>
+  <script src="main.js?v=43"></script>
 </body>
 </html>

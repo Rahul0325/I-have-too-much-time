@@ -533,24 +533,70 @@
   /* ------------------------------------------------------------------
      Contract — the sneaky typing test
      ------------------------------------------------------------------ */
-  const TARGET = "I solemnly swear I will take the typing test";
+  // Three oaths on a ballot. Whichever she picks, it's typed — that's the test.
+  const OATHS = {
+    swear: { t: "I solemnly swear I will take the typing test", k: "(A) The honourable one" },
+    mango: { t: "I solemnly swear to tell Rahul the mango story", k: "(B) The confession",
+      kicker: "Noted. Rahul will be expecting the mango story." },
+    dia: { t: "I solemnly swear that Rahul is the best part of DIA", k: "(C) The flattery",
+      kicker: "Correct. Also, that was a typing test." },
+  };
+  const contract = $(".contract"), ballot = $(".ballot"), ballotOpts = $$(".ballot-opt");
   const oath = $(".oath"), oathText = $(".oath-text"), input = $(".oath-input"), result = $(".result");
-  input.maxLength = TARGET.length;
-  oathText.innerHTML = [...TARGET].map((c) => `<span class="ch">${c}</span>`).join("") + `<span class="ch end">​</span>`;
-  const chars = $$(".ch", oathText);
+  let oathKey = null, TARGET = "", chars = [];
   let startTime = null;
+  // teasers stop mid-sentence, so she doesn't know quite what she's signing
+  ballotOpts.forEach((b) => ($(".ballot-t", b).textContent = OATHS[b.dataset.oath].t.slice(0, 24).trimEnd() + "…"));
+
+  function setOath(key) {
+    oathKey = key; TARGET = OATHS[key].t;
+    input.maxLength = TARGET.length;
+    input.value = ""; startTime = null;
+    oathText.innerHTML = [...TARGET].map((c) => `<span class="ch">${c}</span>`).join("") + `<span class="ch end">​</span>`;
+    chars = $$(".ch", oathText);
+    $(".oath-chosen").textContent = OATHS[key].k;
+    oath.classList.remove("typing");
+    renderOath();
+  }
+
+  // Pick: the other rows fold away, then the oath takes the ballot's place.
+  ballotOpts.forEach((b) => b.addEventListener("click", () => {
+    if (oathKey) return;
+    setOath(b.dataset.oath);
+    const others = ballotOpts.filter((o) => o !== b);
+    gsap.timeline()
+      .to(others, { height: 0, paddingTop: 0, paddingBottom: 0, opacity: 0, borderBottomWidth: 0, duration: 0.55, ease: "power3.inOut" })
+      .to(b, { opacity: 0, y: -10, duration: 0.3, ease: "power2.in" }, "+=0.1")
+      .add(() => {
+        contract.classList.add("chosen");
+        gsap.set(ballotOpts, { clearProps: "all" });
+        ScrollTrigger.refresh();
+        input.focus({ preventScroll: true });
+      })
+      .fromTo(oath, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" })
+      .fromTo(".oath-note", { opacity: 0 }, { opacity: 1, duration: 0.6 }, "-=0.2");
+  }));
+
+  function backToBallot() {
+    oathKey = null; input.value = ""; startTime = null;
+    input.blur();
+    contract.classList.remove("chosen");
+    ScrollTrigger.refresh();
+    gsap.fromTo(ballotOpts, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" });
+  }
+  $(".oath-back").addEventListener("click", (e) => { e.stopPropagation(); backToBallot(); });
   $(".oath-date").textContent = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
   gsap.fromTo(".oath-line", { scaleX: 0 }, { scaleX: 1, duration: 1.6, ease: "expo.out", scrollTrigger: { trigger: ".oath", start: "top 80%" } });
 
   function renderOath() {
     const v = input.value;
+    oath.classList.toggle("typing", v.length > 0);
     chars.forEach((ch, i) => {
       ch.classList.remove("ok", "bad", "caret");
       if (i < v.length) ch.classList.add(v[i].toLowerCase() === TARGET[i].toLowerCase() ? "ok" : "bad");
       if (i === v.length) ch.classList.add("caret");
     });
   }
-  renderOath();
 
   oath.addEventListener("click", () => input.focus());
   input.addEventListener("focus", () => oath.classList.add("focused"));
@@ -573,10 +619,12 @@
     if (input.value.length >= TARGET.length) finishOath();
   });
 
+  // "live" = an oath is chosen, unfinished and on screen; its keys belong to the test
   let oathVisible = false;
-  ScrollTrigger.create({ trigger: ".oath", start: "top 85%", end: "bottom 15%", onToggle: (s) => (oathVisible = s.isActive) });
+  ScrollTrigger.create({ trigger: ".contract", start: "top 85%", end: "bottom 15%", onToggle: (s) => (oathVisible = s.isActive) });
+  const oathLive = () => oathVisible && oathKey && !oath.classList.contains("done");
   addEventListener("keydown", (e) => {
-    if (!oathVisible || oath.classList.contains("done") || document.activeElement === input) return;
+    if (!oathLive() || document.activeElement === input) return;
     if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) input.focus();
   });
 
@@ -598,13 +646,16 @@
     else if (wpm < 100) kicker = "Okay, who taught you to type like that?";
     else kicker = "Excuse me?? 👻";
 
-    if (wpm >= 100) tier = "Tier III unlocked → matcha every week for a month. I'm… scared.";
-    else if (wpm > 45) tier = "Tier II unlocked → 2× iced matcha + a pastry.";
-    else tier = "Tier I unlocked → 1 iced matcha.";
+    if (wpm >= 100) tier = "Tier III · matcha every week for a month (I'm… scared)";
+    else if (wpm > 45) tier = "Tier II · 2× iced matcha + a pastry";
+    else tier = "Tier I · 1 iced matcha";
 
+    if (OATHS[oathKey].kicker) kicker = OATHS[oathKey].kicker;
     $(".result-kicker").textContent = kicker;
     $(".result-ghost").src = G(wpm >= 100 ? "shocked" : "cheer");
-    $(".result-tier").textContent = `${tier} (${milk} milk, naturally · accuracy ${Math.round(accuracy * 100)}%)`;
+    $(".rs-reward").textContent = tier;
+    $(".rs-milk").textContent = `${milk[0].toUpperCase() + milk.slice(1)}, naturally`;
+    $(".rs-acc").textContent = `${Math.round(accuracy * 100)}%`;
     result.classList.add("show");
     ScrollTrigger.refresh();
 
@@ -617,16 +668,14 @@
     scrollToEl(result, -120);
   }
 
+  // "Sign again" goes back to the ballot, so she can try a different fate
   $(".result-retry").addEventListener("click", () => {
-    input.value = ""; startTime = null;
     oath.classList.remove("done");
-    renderOath();
     gsap.to(result, {
       opacity: 0, duration: 0.4, onComplete: () => {
         result.classList.remove("show"); gsap.set(result, { opacity: 1 });
-        ScrollTrigger.refresh();
-        scrollToEl(oath, -200);
-        input.focus({ preventScroll: true });
+        backToBallot();
+        scrollToEl(ballot, -200);
       },
     });
   });
@@ -946,7 +995,7 @@
     if (e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
     const t = e.target;
     const inField = t && t.closest && t.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])");
-    if (inField || document.activeElement === input || (oathVisible && !oath.classList.contains("done"))) {
+    if (inField || document.activeElement === input || oathLive()) {
       keyBuf = "";
       return;
     }
