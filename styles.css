@@ -540,6 +540,7 @@ img[src*="assets/ghosts"] { display: block; height: auto; user-select: none; -we
 .type-meta b { color: var(--leaf); font-weight: 500; font-variant-numeric: tabular-nums; }
 .type-foot { bottom: 28px; }
 .type-lines { font-size: clamp(40px, 7.4vw, 124px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 300; }
+.type-lines.sm { font-size: clamp(32px, 5.4vw, 92px); line-height: 1.06; }
 .type-l { min-height: 1.02em; font-variation-settings: "opsz" 144, "SOFT" 30; }
 .type-l.serif-i { color: var(--leaf); }
 .type-l.typing::after {
@@ -705,3 +706,4 @@ img[src*="assets/ghosts"] { display: block; height: auto; user-select: none; -we
 .eggs-win-fine { margin-top: 18px; font-size: 10px; opacity: .6; }
 .nav-meta, .nav-status, .eggs { white-space: nowrap; }
 @media (max-width: 1000px) { .nav-status { display: none; } }
+

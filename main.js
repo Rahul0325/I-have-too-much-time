@@ -109,50 +109,39 @@
      ------------------------------------------------------------------ */
   gsap.set(".nav", { opacity: 0, y: -20 });
 
-  // Loader scripts, typed live at 100 WPM (120ms per character). {n} is her
-  // egg count; `one` shrinks the line to fit on one row.
+  // Loader scripts, typed live at 100 WPM (120ms per character). {n} is her egg
+  // count and {m} one more than that (the snail's). `sm` uses a smaller size for
+  // wordier scripts; `meta`/`foot` replace the top-left label and the footer.
   const eggCount = () => {
     try { return (JSON.parse(localStorage.getItem("proposal-eggs")) || []).length; } catch (e) { return 0; }
   };
   const SCRIPTS = {
-    first: {
-      lines: [
-        { t: "Hi Natallia." },
-        { t: "This is 100 WPM." },
-        { t: "Your turn.", i: true },
-      ],
-    },
-    still: {
-      lines: [
-        { t: "Welcome back, Natallia.", one: true },
-        { t: "Still {n} out of 7…" },
-        { t: "Take your time. “Savour” it.", i: true },
-      ],
+    first: { lines: [{ t: "Hi Natallia." }, { t: "This is 100 WPM." }, { t: "Your turn.", i: true }] },
+    news: {
+      meta: "● Breaking news", sm: true,
+      lines: [{ t: "Breaking: local snail overtakes Nata." }, { t: "The snail has found {m} eggs." }, { t: "The snail has also taken a typing test.", i: true }],
+      foot: "The snail typed 4 WPM. A personal best.",
     },
   };
+  const fill = (t, n) => t.replace(/\{n\}/g, n).replace(/\{m\}/g, Math.min(n + 1, 7));
 
-  // First visit gets the original; after that, the returning script.
+  // First visit gets the original; after that, the breaking news.
   const seen = localStorage.getItem("proposal-visited") || eggCount() > 0 || localStorage.getItem("proposal-milk");
   localStorage.setItem("proposal-visited", "1");
-  const scriptKey = seen ? "still" : "first";
+  const scriptKey = seen ? "news" : "first";
 
   const LOADER = {
     intro: async () => {
       const sc = SCRIPTS[scriptKey], n = eggCount();
       const box = $(".type-lines"), wpm = $(".type-wpm");
+      box.classList.toggle("sm", !!sc.sm);
+      if (sc.meta) $(".type-meta span").textContent = sc.meta;
+      if (sc.foot) $(".type-foot").textContent = fill(sc.foot, n);
       const lines = sc.lines.map((l) => {
         const p = document.createElement("p");
         p.className = `type-l ${l.i ? "serif-i" : "serif"}`;
-        p.dataset.t = l.t.replace(/\{n\}/g, n);
+        p.dataset.t = fill(l.t, n);
         box.appendChild(p);
-        if (l.one) {
-          // measure the finished line and shrink it until it fits one row
-          p.style.whiteSpace = "nowrap";
-          p.textContent = p.dataset.t;
-          const fs = parseFloat(getComputedStyle(p).fontSize);
-          if (p.scrollWidth > box.clientWidth) p.style.fontSize = `${fs * (box.clientWidth / p.scrollWidth) * 0.98}px`;
-          p.textContent = "";
-        }
         return p;
       });
       gsap.from(".type-meta, .type-foot", { opacity: 0, y: 10, duration: 0.8, ease: "power3.out" });
@@ -272,11 +261,12 @@
   }
 
   /* ------------------------------------------------------------------
-     Reason 01 — friendship meter: fills to "you are here",
-     then a dashed projection runs to "Actual besties"
+     Reason 01 — friendship meter: names she gets called, from "Nat… Natalie?"
+     to "Nata". Fills to "you are here" (just past "Ilya?"), then a dashed
+     projection jumps straight to "Nata", skipping "Natalia?" entirely
      ------------------------------------------------------------------ */
   function setupTrust() {
-    const HERE = 0.42, NEXT = 0.66; // projection only goes up one level
+    const HERE = 0.42, NEXT = 1; // one typing test = straight to Nata
     const fill = $(".trust-fill"), proj = $(".trust-proj"), pin = $(".trust-pin");
     const val = $(".trust-val"), note = $(".trust-note"), ticks = $$(".trust-ticks > span");
     const marks = [0, 0.33, 0.66, 1];
@@ -298,7 +288,8 @@
         val.textContent = b > 0 ? `042% → ${pad(42 + (NEXT - HERE) * 100 * b)}%` : `${pad(42 * a)}%`;
         ticks.forEach((t, i) => {
           t.classList.toggle("lit", solid >= marks[i] - 0.001 && a > 0);
-          t.classList.toggle("soon", solid < marks[i] && projected >= marks[i] - 0.001);
+          // only the destination lights up — "Natalia?" gets skipped
+          t.classList.toggle("soon", i === marks.length - 1 && projected >= marks[i] - 0.001);
         });
         // highlighter swipes in as the projection lands on the next level
         gsap.set(hl, { scaleX: gsap.utils.clamp(0, 1, (b - 0.7) / 0.3), skewX: -12 });
